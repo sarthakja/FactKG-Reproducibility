@@ -1,12 +1,69 @@
 # FactKG: Fact Verification via Reasoning on Knowledge Graphs
 This repository presents the reproducibility results for the paper: FactKG: Fact Verification via Reasoning on Knowledge Graphs. The paper introduces a new dataset that consists of 108k natural language claims with five types of reasoning: One-hop, Conjunction, Existence, Multi-hop, and Negation.
 
-For further details please refer to [the paper](https://arxiv.org/abs/2305.06590) (ACL 2023). The code is taken from the repository published by the authors and can be found [here](https://github.com/jiho283/FactKG/tree/main)
+For further details please refer to [the paper](https://arxiv.org/abs/2305.06590) (ACL 2023). The code is taken from the [repository](https://github.com/jiho283/FactKG/tree/main) published by the authors, and this readme is also adapted from their repository.
 
 ## Getting Started
+### Installing the requirements
+Before running the code, install all the requirements using the command: ```pip install -r requirements.txt```. 
 ### Dataset
-The dataset can be downloaded [here](https://drive.google.com/drive/folders/1q0_MqBeGAp5_cBJCBf_1alYaYm14OeTk?usp=share_link).
+The dataset can be found [here](https://drive.google.com/drive/folders/1q0_MqBeGAp5_cBJCBf_1alYaYm14OeTk?usp=share_link). This is the link provided by the authors. At the link, the required dataset files will be dbpedia_2015_undirected.pickle and the files present in the zipped folder factkg.zip. The zipped folder contains the three dataset splits: factkg_train.pickle, factkg_dev.pickle, and factkg_test.pickle. Move the 4 dataset files, i.e. dbpedia_2015_undirected.pickle, factkg_train.pickle, factkg_dev.pickle, and factkg_test.pickle to the root directory(the directory containing the file requirements.txt, and the folders claim_only and with_evidence). 
 
+## Running the code
+### Baseline results (claim only)
+This section presents the steps to get the results for the baseline models: BERT, BlueBERT and Flan-T5
+```cd claim_only```
+1. BERT: 
+    1. Training BERT: ```python bert_classification.py --mode train --model_name bert-base-uncased --exp_name bert_log --train_data_path /path/to/factkg_train.pickle --valid_data_path /path/to/factkg_test.pickle --scheduler linear --batch_size 64 --eval_batch_size 64 --total_epoch 3``` This will create a folder called bert that holds the checkpoint for each epoch. Also a folder called exp_bert_log will be created that holds the log file.
+    2. Evaluating BERT: ```python bert_classification.py --evaluateModel BERT --valid_data_path /path/to/factkg_test.pickle --mode eval --exp_name 
+                           bert_log --train_data_path /path/to/factkg_train.pickle```. This will print the total accuracy, and the accuracy by reasoning type.
+2. BlueBERT:
+    1. Training BlueBERT: ```python bert_classification.py --mode train --model_name bionlp/bluebert_pubmed_mimic_uncased_L-12_H-768_A-12 --exp_name bluebert_log -- 
+                          train_data_path /path/to/factkg_train.pickle --valid_data_path /path/to/factkg_test.pickle --scheduler linear --batch_size 64 --eval_batch_size 64 -- 
+                           total_epoch 3```
+    2. Evaluating BlueBERT: ```python bert_classification.py --mode eval --evaluateModel BlueBERT--model_name bionlp/bluebert_pubmed_mimic_uncased_L-12_H-768_A-12 --exp_name 
+                            bluebert_log --train_data_path /path/to/factkg_train.pickle --valid_data_path /path/to/factkg_test.pickle --scheduler linear --batch_size 64 --eval_batch_size 64 --total_epoch 3```
+3. Flan-T5: ```python flan_xl_zeroshot.py --valid_data_path /path/to/factkg_test.pickle --model_name google/flan-t5-xl```
+
+### With Evidence
+This section presents the steps to get the results for the model that incorporates Knowledge Graph as the evidence.
+```cd with_evidence```
+
+#### 1. Graph Retriever
+
+```cd retrieve```
+
+Step 1) preprocess data
+
+1. ```cd data```
+
+2. ```python data_preprocess.py --data_directory_path <<<directory path where factkg_{train, dev, test}.pickle are located>>> --output_directory_path ../model/```
+
+
+Step 2) train relation predictor
+
+1. ```cd model/relation_predict```
+
+2. ```python main.py --mode train --config ../config/relation_predict_top3.yaml```
+
+3. ```python main.py --mode eval --config ../config/relation_predict_top3.yaml --model_path <<<model_path.ckpt>>>```
+
+Step 3) train hop predictor
+
+1. ```cd model/hop_predict```
+
+2. ```python main.py --mode train --config ../config/hop_predict.yaml```
+
+3. ```python main.py --mode eval --config ../config/hop_predict.yaml --model_path ./model.pth```
+
+#### 2. Classifier
+
+1. ```cd classifier```
+
+2. ```python baseline.py --data_path <<<directory path where factkg_{train, dev, test}.pickle are located>>> --kg_path /path/to/dbpedia_2015_undirected_light.pickle```
+
+
+## Additional details about the dataset
 The ```factkg_train.pickle``` is a train set in the form of a dictionary.
 
 Each dictionary key is a claim. The following information is included in the value of each claim as a key.
@@ -56,53 +113,3 @@ with open('dbpedia_2015_undirected.pickle', 'rb') as f:
 3) ```dbpedia[entity][relation]``` returns the list of the tails that are connected to the entity with the relation.
 4) There are also reversed relations (they contain '~' in front of the relations). For example, the entity 'Korean_language' is in dbpedia['Korea']['language'] and the entity 'Korea' is in dbpedia['Korean_language']['~language'].
 
-
-## Getting Started
-### Installing the requirements
-Before running the code, install all the requirements using the command: ```pip install -r requirements.txt```. 
-### Dataset
-The dataset can be found [here](https://drive.google.com/drive/folders/1q0_MqBeGAp5_cBJCBf_1alYaYm14OeTk?usp=share_link). This is the link provided by the authors. At the link, the required dataset files will be dbpedia_2015_undirected.pickle and the files present in the zipped folder factkg.zip. The zipped folder contains the three dataset splits: factkg_train.pickle, factkg_dev.pickle, and factkg_test.pickle. Move the 4 dataset files, i.e. dbpedia_2015_undirected.pickle, factkg_train.pickle, factkg_dev.pickle, and factkg_test.pickle to the root directory(the directory containing the file requirements.txt, and the folders claim_only and with_evidence). 
-
-## Baseline
-This section presents the steps to get the results for the baseline models: BERT, BlueBERT and Flan-T5
-### Claim Only
-```cd claim_only```
-1. BERT: ```python bert_classification.py --model_name bert-base-uncased --exp_name bert_log --train_data_path /path/to/factkg_train.pickle --valid_data_path /path/to/factkg_test.pickle --scheduler linear --batch_size 64 --eval_batch_size 64 --total_epoch 3```
-2. BlueBERT: ```python bert_classification.py --model_name bionlp/bluebert_pubmed_mimic_uncased_L-12_H-768_A-12 --exp_name bluebert_log --train_data_path /path/to/factkg_train.pickle --valid_data_path /path/to/factkg_test.pickle --scheduler linear --batch_size 64 --eval_batch_size 64 --total_epoch 3```
-3. Flan-T5: ```python flan_xl_zeroshot.py --valid_data_path /path/to/factkg_test.pickle --model_name google/flan-t5-xl```
-
-## With Evidence
-```cd with_evidence```
-
-#### 1. Graph Retriever
-
-```cd retrieve```
-
-Step 1) preprocess data
-
-1. ```cd data```
-
-2. ```python data_preprocess.py --data_directory_path <<<directory path where factkg_{train, dev, test}.pickle are located>>> --output_directory_path ../model/```
-
-
-Step 2) train relation predictor
-
-1. ```cd model/relation_predict```
-
-2. ```python main.py --mode train --config ../config/relation_predict_top3.yaml```
-
-3. ```python main.py --mode eval --config ../config/relation_predict_top3.yaml --model_path <<<model_path.ckpt>>>```
-
-Step 3) train hop predictor
-
-1. ```cd model/hop_predict```
-
-2. ```python main.py --mode train --config ../config/hop_predict.yaml```
-
-3. ```python main.py --mode eval --config ../config/hop_predict.yaml --model_path ./model.pth```
-
-#### 2. Classifier
-
-1. ```cd classifier```
-
-2. ```python baseline.py --data_path <<<directory path where factkg_{train, dev, test}.pickle are located>>> --kg_path /path/to/dbpedia_2015_undirected_light.pickle```
