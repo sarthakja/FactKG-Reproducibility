@@ -94,7 +94,7 @@ def define_argparser():
     parser.add_argument('--early_stopping_patience', default=np.inf, type=int)
     parser.add_argument('--patience', default=10, type=int)
     parser.add_argument('--mode', type=str, required=True)
-    parser.add_argument('--evaluateModel', type=str, required=True)
+    parser.add_argument('--evaluateModel', type=str, required=False)
         
     args = parser.parse_args()
     return args
@@ -537,5 +537,7 @@ if __name__ == '__main__':
     elif(args.mode == "eval"):
       if(args.evaluateModel == "BERT"):
         evaluate()
+    else:
+        print("Please add appropriate value for command line argument evaluateModel. The acceptable values are BERT and BlueBERT")
       elif(args.evaluateModel == "BlueBERT"):
         evaluateBlueBERT()
