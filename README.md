@@ -1,5 +1,5 @@
 # FactKG: Fact Verification via Reasoning on Knowledge Graphs
-This repository presents the reproducibility results for the paper: FactKG: Fact Verification via Reasoning on Knowledge Graphs. The paper introduces a new dataset that consists of 108k natural language claims with five types of reasoning: One-hop, Conjunction, Existence, Multi-hop, and Negation.
+This repository presents the reproducibility results for the paper: FactKG: Fact Verification via Reasoning on Knowledge Graphs. The paper introduces a new dataset that consists of 108k natural language claims with five types of reasoning: One-hop, Conjunction, Existence, Multi-hop, and Negation. The report of the study is present in the file FINAL_REPORT.
 
 For further details please refer to [the paper](https://arxiv.org/abs/2305.06590) (ACL 2023). The code is taken from the [repository](https://github.com/jiho283/FactKG/tree/main) published by the authors, and this readme is also adapted from their repository.
 
